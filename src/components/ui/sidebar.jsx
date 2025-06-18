@@ -1,8 +1,14 @@
-"use client";;
+"use client";
 import { cn } from "./../../lib/utils";
 import React, { useState, createContext, useContext } from "react";
-import { AnimatePresence, motion } from "motion/react";
+// Corrected import from 'motion/react' to 'framer-motion' which is the standard package name
+import { AnimatePresence, motion } from "framer-motion";
 import { IconMenu2, IconX } from "@tabler/icons-react";
+import { signOut } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
+
+// NEW: Import NavLink from react-router-dom
+import { NavLink } from "react-router-dom";
 
 const SidebarContext = createContext(undefined);
 
@@ -14,6 +20,8 @@ export const useSidebar = () => {
   return context;
 };
 
+// --- No changes to the components below this line ---
+
 export const SidebarProvider = ({
   children,
   open: openProp,
@@ -21,10 +29,8 @@ export const SidebarProvider = ({
   animate = true
 }) => {
   const [openState, setOpenState] = useState(false);
-
   const open = openProp !== undefined ? openProp : openState;
   const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState;
-
   return (
     <SidebarContext.Provider value={{ open, setOpen, animate: animate }}>
       {children}
@@ -125,26 +131,82 @@ export const MobileSidebar = ({
   );
 };
 
+
+// --- UPDATED SidebarLink COMPONENT ---
+// This is the only component that has been changed.
+
 export const SidebarLink = ({
   link,
   className,
   ...props
 }) => {
   const { open, animate } = useSidebar();
+  
+  // --- Case 1: Handle the "Logout" button specifically ---
+  // It's an action, not a navigation link, so it remains an `<a>` tag with an onClick handler.
+  if (link.label === "Logout") {
+    const handleLogout = async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        console.log("User logged out successfully");
+        // Force a redirect to the login page after successful logout
+        window.location.href = '/login'; 
+      } catch (error) {
+        console.error("Error logging out:", error);
+      }
+    };
+
+    return (
+      <a
+        href={link.href}
+        onClick={handleLogout}
+        className={cn(
+          "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer text-neutral-200 hover:text-red-400 transition-colors",
+          className
+        )}
+        {...props}
+      >
+        {link.icon}
+        <motion.span
+          animate={{
+            display: animate ? (open ? "inline-block" : "none") : "inline-block",
+            opacity: animate ? (open ? 1 : 0) : 1,
+          }}
+          className="text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0">
+          {link.label}
+        </motion.span>
+      </a>
+    );
+  }
+
+  // --- Case 2: Handle all other navigation links using NavLink ---
+  // This uses client-side routing and allows for active link styling.
   return (
-    <a
-      href={link.href}
-      className={cn("flex items-center justify-start gap-2 text-neutral-200 group/sidebar py-2", className)}
-      {...props}>
+    <NavLink
+      to={link.href}
+      // The `className` prop can be a function that receives { isActive }
+      className={({ isActive }) => cn(
+        "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer transition-colors",
+        // Apply active styles if the link is active
+        isActive 
+          ? "bg-purple-600/20 text-white rounded-md px-2 -mx-2" 
+          : "text-neutral-200 hover:text-white",
+        className
+      )}
+      {...props}
+    >
+      {/* The icon and label are now children of NavLink */}
       {link.icon}
       <motion.span
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,
         }}
-        className="text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0">
+        className="text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+      >
         {link.label}
       </motion.span>
-    </a>
+    </NavLink>
   );
 };
