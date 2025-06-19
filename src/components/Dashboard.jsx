@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Download, RefreshCw, AlertCircle, CheckCircle2, Palette, Sparkles } from "lucide-react";
+import { Copy, Download, RefreshCw, AlertCircle, CheckCircle2, Palette, Sparkles, MessageSquare, X } from "lucide-react";
 
 // Make sure these paths are correct relative to Dashboard.jsx
 import { FileUpload } from "./ui/file-upload";
@@ -20,6 +20,10 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [copySuccess, setCopySuccess] = useState(false);
+  
+  // New state for custom description
+  const [customDescription, setCustomDescription] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   // Load available styles on component mount
   useEffect(() => {
@@ -37,7 +41,8 @@ const Dashboard = () => {
           {id: "poetic", name: "Poetic", description: "Beautiful and literary"},
           {id: "marketing", name: "Marketing", description: "Compelling and attention-grabbing"},
           {id: "social", name: "Social Media", description: "Perfect for social platforms"},
-          {id: "artistic", name: "Artistic", description: "Sophisticated and refined"}
+          {id: "artistic", name: "Artistic", description: "Sophisticated and refined"},
+          {id: "custom", name: "Custom", description: "Describe your own style"}
         ]);
       }
     };
@@ -51,6 +56,16 @@ const Dashboard = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  // Handle style selection and show/hide custom input
+  useEffect(() => {
+    if (selectedStyle === 'custom') {
+      setShowCustomInput(true);
+    } else {
+      setShowCustomInput(false);
+      setCustomDescription('');
+    }
+  }, [selectedStyle]);
 
   // All handler functions for the caption generator
   const handleFileUpload = async (files) => {
@@ -94,16 +109,32 @@ const Dashboard = () => {
       setError("Please upload an image first.");
       return;
     }
+
+    // Validate custom description if custom style is selected
+    if (selectedStyle === 'custom' && !customDescription.trim()) {
+      setError("Please describe what kind of caption you want.");
+      return;
+    }
     
     setLoading(true);
     setCaptionGenerated(false);
     setError(null);
     
     try {
+      const requestBody = {
+        image_url: imageUrl,
+        style: selectedStyle
+      };
+
+      // Add custom description if custom style is selected
+      if (selectedStyle === 'custom') {
+        requestBody.custom_description = customDescription.trim();
+      }
+
       const response = await fetch("http://localhost:8000/generate-caption", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_url: imageUrl, style: selectedStyle })
+        body: JSON.stringify(requestBody)
       });
       
       const res = await response.json();
@@ -142,6 +173,9 @@ const Dashboard = () => {
     setCaptionGenerated(false);
     setCaptionText('');
     setBasicCaption('');
+    setCustomDescription('');
+    setSelectedStyle('creative');
+    setShowCustomInput(false);
     setError(null);
     setUploadProgress(0);
   };
@@ -165,9 +199,14 @@ const Dashboard = () => {
       poetic: "🎭",
       marketing: "📈",
       social: "📱",
-      artistic: "🎨"
+      artistic: "🎨",
+      custom: "💭"
     };
     return icons[styleId] || "✨";
+  };
+
+  const getCurrentStyleName = () => {
+    return availableStyles.find(s => s.id === selectedStyle)?.name || selectedStyle;
   };
 
   return (
@@ -312,12 +351,57 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
+      {/* Custom Description Input */}
+      <AnimatePresence>
+        {showCustomInput && imageUrl && !uploadLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-2xl"
+          >
+            <div className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-lg p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-purple-400" />
+                  <h3 className="text-lg font-medium text-white">Describe Your Caption Style</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedStyle('creative')}
+                  className="p-1 hover:bg-neutral-700 rounded-full transition-colors"
+                  title="Close custom input"
+                >
+                  <X className="h-4 w-4 text-neutral-400" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <textarea
+                  value={customDescription}
+                  onChange={(e) => setCustomDescription(e.target.value)}
+                  placeholder="Describe what kind of caption you want... (e.g., 'motivational quote for fitness', 'romantic caption for couple photo', 'professional caption for business post')"
+                  className="w-full h-24 bg-neutral-800/50 border border-neutral-600 rounded-lg p-3 text-white placeholder-neutral-400 resize-none focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 transition-colors"
+                  maxLength={200}
+                />
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-neutral-400">
+                    Be specific about tone, emotion, or purpose for better results
+                  </p>
+                  <span className="text-xs text-neutral-500">
+                    {customDescription.length}/200
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Generate Caption Button */}
       {imageUrl && !uploadLoading && (
         <motion.button
           className="p-[3px] relative disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleGenerateCaption}
-          disabled={!imageUrl || loading || uploadLoading}
+          disabled={!imageUrl || loading || uploadLoading || (selectedStyle === 'custom' && !customDescription.trim())}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -326,12 +410,12 @@ const Dashboard = () => {
             {loading ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                Generating {availableStyles.find(s => s.id === selectedStyle)?.name} Caption...
+                Generating {getCurrentStyleName()} Caption...
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                Generate {availableStyles.find(s => s.id === selectedStyle)?.name} Caption
+                Generate {getCurrentStyleName()} Caption
               </>
             )}
           </div>
@@ -350,7 +434,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-400" />
-                {getStyleIcon(selectedStyle)} {availableStyles.find(s => s.id === selectedStyle)?.name} Caption
+                {getStyleIcon(selectedStyle)} {getCurrentStyleName()} Caption
               </h2>
               <button
                 onClick={handleCopyCaption}
@@ -363,10 +447,10 @@ const Dashboard = () => {
             <div className="bg-black/30 rounded-lg p-4 border border-purple-500/20 mb-4">
               <p className="text-purple-100 leading-relaxed text-lg">{captionText}</p>
             </div>
-            {basicCaption && basicCaption !== captionText && (
-              <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-600/20">
-                <p className="text-xs text-neutral-400 mb-1">Original AI Description:</p>
-                <p className="text-neutral-300 text-sm italic">{basicCaption}</p>
+            {selectedStyle === 'custom' && customDescription && (
+              <div className="bg-purple-900/20 rounded-lg p-3 border border-purple-500/20 mt-3">
+                <p className="text-xs text-purple-400 mb-1">Your Custom Request:</p>
+                <p className="text-purple-200 text-sm">{customDescription}</p>
               </div>
             )}
             <div className="flex gap-3 mt-4">
@@ -391,6 +475,7 @@ const Dashboard = () => {
             <ul className="text-sm text-neutral-300 space-y-2 text-left">
               <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>AI-powered caption generation</li>
               <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>Multiple caption styles</li>
+              <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>Custom description support</li>
               <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>Secure cloud image storage</li>
               <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>One-click copy to clipboard</li>
             </ul>
@@ -399,7 +484,7 @@ const Dashboard = () => {
             <h4 className="text-lg font-medium mb-3 text-blue-400">🚀 How it works</h4>
             <div className="text-sm text-neutral-300 space-y-2 text-left">
               <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">1.</span><span>Upload your image</span></div>
-              <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">2.</span><span>Choose your caption style</span></div>
+              <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">2.</span><span>Choose style or describe custom</span></div>
               <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">3.</span><span>Generate & copy your caption</span></div>
             </div>
           </div>
