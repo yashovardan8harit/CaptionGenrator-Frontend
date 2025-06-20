@@ -1,27 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth';
+// src/pages/Settings.jsx
+
+import React, { useState } from 'react';
+import { useAuth } from '../lib/AuthContext';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import { AlertCircle, CheckCircle, KeyRound, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Settings = () => {
-  const [email, setEmail] = useState('');
+  const { currentUser } = useAuth();
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const auth = getAuth();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setEmail(user.email);
-      }
-    });
-    return () => unsubscribe();
-  }, [auth]);
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
-    if (!email) {
+    if (!currentUser?.email) {
       setError("Could not find user's email.");
       return;
     }
@@ -29,8 +23,8 @@ const Settings = () => {
     setMessage('');
     setError('');
     try {
-      await sendPasswordResetEmail(auth, email);
-      setMessage(`A password reset link has been sent to ${email}. Please check your inbox.`);
+      await sendPasswordResetEmail(auth, currentUser.email);
+      setMessage(`A password reset link has been sent to ${currentUser.email}. Please check your inbox.`);
     } catch (err) {
       setError(err.message);
     }
@@ -61,14 +55,14 @@ const Settings = () => {
                         <label className="text-sm text-neutral-300">Your Email</label>
                         <input
                             type="email"
-                            value={email}
+                            value={currentUser?.email || ''}
                             disabled
                             className="w-full mt-1 p-2 bg-neutral-700 border border-neutral-600 rounded-md text-neutral-400 cursor-not-allowed"
                         />
                     </div>
                     <button
                         type="submit"
-                        disabled={loading || !email}
+                        disabled={loading || !currentUser?.email}
                         className="w-full flex justify-center items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? (

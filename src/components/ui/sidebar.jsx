@@ -1,8 +1,9 @@
+// src/components/ui/sidebar.jsx
+
 "use client";
 import { cn } from "./../../lib/utils";
 import React, { useState, createContext, useContext } from "react";
-// Corrected import from 'motion/react' to 'framer-motion' which is the standard package name
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion"; // Corrected import
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -70,11 +71,11 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-full px-4 py-4 hidden  md:flex md:flex-col bg-neutral-800 w-[300px] shrink-0",
+          "h-full px-4 py-4 hidden md:flex md:flex-col bg-neutral-950 border-r border-neutral-800 w-[240px] shrink-0", // Adjusted background color and width
           className
         )}
         animate={{
-          width: animate ? (open ? "300px" : "60px") : "300px",
+          width: animate ? (open ? "240px" : "60px") : "240px",
         }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -95,7 +96,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden  items-center justify-between bg-neutral-800 w-full"
+          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-neutral-950 w-full" // Adjusted background
         )}
         {...props}>
         <div className="flex justify-end z-20 w-full">
@@ -133,8 +134,6 @@ export const MobileSidebar = ({
 
 
 // --- UPDATED SidebarLink COMPONENT ---
-// This is the only component that has been changed.
-
 export const SidebarLink = ({
   link,
   className,
@@ -142,16 +141,12 @@ export const SidebarLink = ({
 }) => {
   const { open, animate } = useSidebar();
   
-  // --- Case 1: Handle the "Logout" button specifically ---
-  // It's an action, not a navigation link, so it remains an `<a>` tag with an onClick handler.
+  // Handle the "Logout" button specifically
   if (link.label === "Logout") {
     const handleLogout = async (e) => {
       e.preventDefault();
       try {
         await signOut(auth);
-        console.log("User logged out successfully");
-        // Force a redirect to the login page after successful logout
-        window.location.href = '/login'; 
       } catch (error) {
         console.error("Error logging out:", error);
       }
@@ -162,7 +157,7 @@ export const SidebarLink = ({
         href={link.href}
         onClick={handleLogout}
         className={cn(
-          "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer text-neutral-200 hover:text-red-400 transition-colors",
+          "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer text-neutral-400 hover:bg-red-600/20 hover:text-red-300 rounded-md px-2",
           className
         )}
         {...props}
@@ -180,23 +175,20 @@ export const SidebarLink = ({
     );
   }
 
-  // --- Case 2: Handle all other navigation links using NavLink ---
-  // This uses client-side routing and allows for active link styling.
+  // Handle all other navigation links using NavLink
   return (
     <NavLink
       to={link.href}
-      // The `className` prop can be a function that receives { isActive }
+      end // Use `end` for the dashboard link to not match all child routes
       className={({ isActive }) => cn(
-        "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer transition-colors",
-        // Apply active styles if the link is active
+        "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer transition-colors rounded-md px-2",
         isActive 
-          ? "bg-purple-600/20 text-white rounded-md px-2 -mx-2" 
-          : "text-neutral-200 hover:text-white",
+          ? "bg-purple-600/20 text-purple-300" 
+          : "text-neutral-400 hover:bg-neutral-800 hover:text-white",
         className
       )}
       {...props}
     >
-      {/* The icon and label are now children of NavLink */}
       {link.icon}
       <motion.span
         animate={{

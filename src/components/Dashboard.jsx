@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Download, RefreshCw, AlertCircle, CheckCircle2, Palette, Sparkles, MessageSquare, X } from "lucide-react";
+import { useAuth } from './../lib/AuthContext';
 
 // Make sure these paths are correct relative to Dashboard.jsx
 import { FileUpload } from "./ui/file-upload";
@@ -24,6 +25,8 @@ const Dashboard = () => {
   // New state for custom description
   const [customDescription, setCustomDescription] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
+
+  const { currentUser: user, loading: authLoading } = useAuth();
 
   // Load available styles on component mount
   useEffect(() => {
@@ -104,57 +107,76 @@ const Dashboard = () => {
     }
   };
 
-  const handleGenerateCaption = async () => {
+  // In Dashboard.jsx
+
+const handleGenerateCaption = async () => {
     if (!imageUrl) {
-      setError("Please upload an image first.");
+      setError("Please upload an image first."); // Also set an error for user feedback
       return;
     }
 
-    // Validate custom description if custom style is selected
-    if (selectedStyle === 'custom' && !customDescription.trim()) {
-      setError("Please describe what kind of caption you want.");
+    if (!user) {
+      setError("You must be logged in to generate captions.");
       return;
     }
-    
+
+    if (selectedStyle === 'custom' && !customDescription.trim()) {
+      setError("Please describe what kind of caption you want for the custom style.");
+      return;
+    }
     setLoading(true);
     setCaptionGenerated(false);
     setError(null);
     
     try {
+      const token = await user.getIdToken();
+      console.log("Token received:", token.substring(0, 30) + "..."); // Log a snippet of the token
+
       const requestBody = {
         image_url: imageUrl,
-        style: selectedStyle
+        style: selectedStyle,
+        custom_description: selectedStyle === 'custom' ? customDescription.trim() : null
       };
+      
+      console.log("Sending request to backend with body:", requestBody);
 
-      // Add custom description if custom style is selected
-      if (selectedStyle === 'custom') {
-        requestBody.custom_description = customDescription.trim();
-      }
-
+      // Go to the "Network" tab in your browser dev tools now!
       const response = await fetch("http://localhost:8000/generate-caption", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(requestBody)
       });
       
+      console.log("Backend responded with status:", response.status);
       const res = await response.json();
+      console.log("Backend response data:", res);
       
-      if (res.success) {
-        setCaptionText(res.enhanced_caption || res.caption);
-        setBasicCaption(res.basic_caption || res.caption);
-        setCaptionGenerated(true);
-      } else {
-        throw new Error(res.error || "Caption generation failed");
+      if (!response.ok) {
+        // This will now catch errors like 401, 404, 500 etc.
+        throw new Error(res.detail || "An error occurred on the server.");
       }
+      
+      console.log("SUCCESS: Setting caption text.");
+      setCaptionText(res.enhanced_caption || res.caption);
+      setBasicCaption(res.basic_caption || res.caption);
+      setCaptionGenerated(true);
+
     } catch (err) {
-      console.error("Error fetching caption:", err);
+      // Checkpoint 4: If anything goes wrong, we'll see it here.
+      console.error("--- CATCH BLOCK TRIGGERED ---");
+      console.error("The error is:", err);
       setError(`Caption generation failed: ${err.message}`);
       setCaptionText("");
       setBasicCaption("");
       setCaptionGenerated(false);
+    } finally {
+      // Checkpoint 5: This will always run, no matter what.
+      console.log("--- FINALLY BLOCK --- Setting loading to false.");
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleCopyCaption = async () => {
@@ -401,7 +423,7 @@ const Dashboard = () => {
         <motion.button
           className="p-[3px] relative disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleGenerateCaption}
-          disabled={!imageUrl || loading || uploadLoading || (selectedStyle === 'custom' && !customDescription.trim())}
+          disabled={!imageUrl || authLoading || loading || uploadLoading || (selectedStyle === 'custom' && !customDescription.trim())}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >

@@ -1,12 +1,16 @@
+// src/App.jsx
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-// Your existing authentication hook - NO CHANGES NEEDED HERE
+// Your existing authentication hook
 import { useAuth } from './lib/AuthContext';
 
 // Import the main application layout and all page components
+// NOTE: Ensure these paths match your project structure.
 import AppLayout from './layouts/AppLayout';
 import Dashboard from './components/Dashboard';
+import History from './components/History'; // <-- ADD THIS IMPORT
 import Profile from './components/Profile';
 import Settings from './components/Settings';
 import Login from './components/ui/Login';
@@ -16,10 +20,9 @@ import Signup from './components/ui/Signup';
 import { Loader2 } from 'lucide-react';
 
 function App() {
-  // Your authentication logic remains unchanged
   const { currentUser, loading } = useAuth();
 
-  // Show a loading screen while Firebase checks auth state. This is good practice.
+  // Show a loading screen while Firebase checks auth state.
   if (loading) {
     return (
       <div className="h-screen w-screen flex justify-center items-center bg-black">
@@ -31,12 +34,7 @@ function App() {
 
   return (
     <Routes>
-      {/*
-        PUBLIC ROUTES:
-        These routes are for users who are NOT logged in.
-        If a logged-in user tries to visit /login or /signup, they are
-        automatically redirected to the main dashboard.
-      */}
+      {/* PUBLIC ROUTES */}
       <Route 
         path="/login" 
         element={!currentUser ? <Login /> : <Navigate to="/dashboard" replace />} 
@@ -46,32 +44,20 @@ function App() {
         element={!currentUser ? <Signup /> : <Navigate to="/dashboard" replace />} 
       />
 
-      {/*
-        PROTECTED ROUTES:
-        These routes are for users who ARE logged in. They are wrapped in the
-        AppLayout component which provides the sidebar and main content area.
-        If a logged-out user tries to visit any of these, they are
-        automatically redirected to the /login page.
-      */}
+      {/* PROTECTED ROUTES */}
       <Route 
         path="/" 
         element={currentUser ? <AppLayout /> : <Navigate to="/login" replace />}
       >
-        {/* The index route redirects from "/" to "/dashboard" by default */}
         <Route index element={<Navigate to="/dashboard" replace />} />
         
-        {/* The pages that will render inside the AppLayout's <Outlet /> */}
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="history" element={<History />} /> {/* <-- ADD THIS ROUTE */}
         <Route path="profile" element={<Profile />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      {/*
-        FALLBACK ROUTE:
-        This catches any URL that doesn't match the routes defined above.
-        It safely redirects the user to the correct starting page based
-        on their login status.
-      */}
+      {/* FALLBACK ROUTE */}
       <Route 
         path="*" 
         element={<Navigate to={currentUser ? "/dashboard" : "/login"} replace />} 
