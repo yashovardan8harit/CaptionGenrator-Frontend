@@ -140,7 +140,7 @@ export const SidebarLink = ({
   ...props
 }) => {
   const { open, animate } = useSidebar();
-  
+
   // Handle the "Logout" button specifically
   if (link.label === "Logout") {
     const handleLogout = async (e) => {
@@ -158,6 +158,7 @@ export const SidebarLink = ({
         onClick={handleLogout}
         className={cn(
           "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer text-neutral-400 hover:bg-red-600/20 hover:text-red-300 rounded-md px-2",
+          open ? "justify-start gap-2" : "justify-center",
           className
         )}
         {...props}
@@ -179,11 +180,12 @@ export const SidebarLink = ({
   return (
     <NavLink
       to={link.href}
-      end // Use `end` for the dashboard link to not match all child routes
+      end={link.href === "/"} // Use `end` for the dashboard link to not match all child routes
       className={({ isActive }) => cn(
         "flex items-center justify-start gap-2 group/sidebar py-2 cursor-pointer transition-colors rounded-md px-2",
-        isActive 
-          ? "bg-purple-600/20 text-purple-300" 
+        open ? "justify-start gap-2" : "justify-center",
+        isActive
+          ? "bg-purple-600/20 text-purple-300"
           : "text-neutral-400 hover:bg-neutral-800 hover:text-white",
         className
       )}

@@ -19,13 +19,13 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
       setError(err.message);
     }
-    
+
     setLoading(false);
   };
 

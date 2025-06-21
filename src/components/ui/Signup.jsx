@@ -33,13 +33,13 @@ export default function Signup() {
       setLoading(false);
       return;
     }
-    
+
     try {
       await createUserWithEmailAndPassword(auth, email, password);
     } catch (err) {
       setError(err.message);
     }
-    
+
     setLoading(false);
   };
 
@@ -137,7 +137,7 @@ export default function Signup() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              
+
               {password && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -148,7 +148,7 @@ export default function Signup() {
                   </div>
                   <div className="w-full bg-neutral-700 rounded-full h-1">
                     <motion.div
-                      className="bg-gradient-to-r from-red-500 via-yellow-500 via-blue-500 to-green-500 h-1 rounded-full"
+                      className="bg-gradient-to-r from-red-500 via-blue-500 to-green-500 h-1 rounded-full"
                       initial={{ width: 0 }}
                       animate={{ width: `${passwordStrength.strength}%` }}
                       transition={{ duration: 0.3 }}
@@ -178,7 +178,7 @@ export default function Signup() {
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              
+
               {confirmPassword && (
                 <div className="flex items-center gap-2 text-xs">
                   {password === confirmPassword ? (

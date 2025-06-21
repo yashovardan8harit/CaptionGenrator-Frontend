@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../lib/AuthContext'; // Ensure this path is correct
-import { 
-  History as HistoryIcon, 
-  Trash2, 
-  Copy, 
-  Download, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  History as HistoryIcon,
+  Trash2,
+  Copy,
+  Download,
+  AlertCircle,
+  CheckCircle2,
   Calendar,
   Loader2,
   Search,
@@ -21,7 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const History = () => {
   // 1. CORRECTLY destructure `currentUser` and rename it to `user`
   const { currentUser: user, loading: authLoading } = useAuth();
-  
+
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true); // This is for the history page's own loading state
   const [error, setError] = useState(null);
@@ -48,7 +48,7 @@ const History = () => {
     if (!authLoading && user) {
       console.log("[History.jsx] Auth complete and user found. Fetching history...");
       fetchHistory(user);
-    } 
+    }
     // If auth is complete but there's no user, stop loading and show empty state
     else if (!authLoading && !user) {
       console.log("[History.jsx] Auth complete, no user found. Clearing state.");
@@ -106,17 +106,17 @@ const History = () => {
     if (!user) return;
     setDeleteLoading(historyId);
     try {
-        const token = await user.getIdToken();
-        const response = await fetch(`http://localhost:8000/user/history/${historyId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Failed to delete item');
-        setHistory(prev => prev.filter(item => item.id !== historyId));
+      const token = await user.getIdToken();
+      const response = await fetch(`http://localhost:8000/user/history/${historyId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to delete item');
+      setHistory(prev => prev.filter(item => item.id !== historyId));
     } catch (err) {
-        setError(`Failed to delete: ${err.message}`);
+      setError(`Failed to delete: ${err.message}`);
     } finally {
-        setDeleteLoading(null);
+      setDeleteLoading(null);
     }
   };
 
@@ -124,20 +124,20 @@ const History = () => {
     if (!user || !window.confirm('Are you sure you want to delete all history?')) return;
     setClearingAll(true);
     try {
-        const token = await user.getIdToken();
-        const response = await fetch('http://localhost:8000/user/history', {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Failed to clear history');
-        setHistory([]);
+      const token = await user.getIdToken();
+      const response = await fetch('http://localhost:8000/user/history', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to clear history');
+      setHistory([]);
     } catch (err) {
-        setError(`Failed to clear history: ${err.message}`);
+      setError(`Failed to clear history: ${err.message}`);
     } finally {
-        setClearingAll(false);
+      setClearingAll(false);
     }
   };
-  
+
   // ... your other helper functions like handleCopyCaption, handleDownloadImage, formatDate are fine ...
   const handleCopyCaption = async (caption, itemId) => {
     try {
@@ -156,7 +156,7 @@ const History = () => {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Just now';
     const date = new Date(dateString);
@@ -168,9 +168,9 @@ const History = () => {
     const matchesSearch = searchTerm === '' ||
       item.enhanced_caption?.toLowerCase().includes(searchTermLower) ||
       item.custom_description?.toLowerCase().includes(searchTermLower);
-    
+
     const matchesStyle = filterStyle === 'all' || item.style === filterStyle;
-    
+
     return matchesSearch && matchesStyle;
   });
 
@@ -190,7 +190,7 @@ const History = () => {
   return (
     <div className="relative z-10 w-full px-4 flex flex-col items-center justify-start gap-6 py-10 min-h-screen">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center w-full max-w-4xl">
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text mb-4">
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text mb-4 py-2">
           Caption History
         </h1>
         <p className="text-neutral-400 text-lg">View and manage all your generated captions</p>
@@ -254,8 +254,8 @@ const History = () => {
                             <span className="text-lg">{styles.find(s => s.id === item.style)?.icon || '✨'}</span>
                             <span className="font-medium text-purple-400 capitalize">{item.style} Style</span>
                             <div className="flex items-center gap-1 text-sm text-neutral-500">
-                                <Calendar className="h-4 w-4" />
-                                <span>{formatDate(item.created_at)}</span>
+                              <Calendar className="h-4 w-4" />
+                              <span>{formatDate(item.created_at)}</span>
                             </div>
                           </div>
                           <button onClick={() => handleDeleteItem(item.id)} disabled={deleteLoading === item.id} className="p-1 text-neutral-500 hover:text-red-400 transition-colors disabled:opacity-50" title="Delete">

@@ -21,7 +21,8 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [copySuccess, setCopySuccess] = useState(false);
-  
+  const [uploaderFiles, setUploaderFiles] = useState([]);
+
   // New state for custom description
   const [customDescription, setCustomDescription] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -39,13 +40,13 @@ const Dashboard = () => {
         console.error("Error fetching styles:", error);
         // Fallback styles if API fails
         setAvailableStyles([
-          {id: "creative", name: "Creative", description: "Engaging and imaginative"},
-          {id: "funny", name: "Funny", description: "Humorous and witty"},
-          {id: "poetic", name: "Poetic", description: "Beautiful and literary"},
-          {id: "marketing", name: "Marketing", description: "Compelling and attention-grabbing"},
-          {id: "social", name: "Social Media", description: "Perfect for social platforms"},
-          {id: "artistic", name: "Artistic", description: "Sophisticated and refined"},
-          {id: "custom", name: "Custom", description: "Describe your own style"}
+          { id: "creative", name: "Creative", description: "Engaging and imaginative" },
+          { id: "funny", name: "Funny", description: "Humorous and witty" },
+          { id: "poetic", name: "Poetic", description: "Beautiful and literary" },
+          { id: "marketing", name: "Marketing", description: "Compelling and attention-grabbing" },
+          { id: "social", name: "Social Media", description: "Perfect for social platforms" },
+          { id: "artistic", name: "Artistic", description: "Sophisticated and refined" },
+          { id: "custom", name: "Custom", description: "Describe your own style" }
         ]);
       }
     };
@@ -91,7 +92,7 @@ const Dashboard = () => {
       setImageUrl(imageUrl);
       setUploadedFile(file);
       setUploadProgress(100);
-      
+
       setTimeout(() => {
         setUploadLoading(false);
         setUploadProgress(0);
@@ -109,7 +110,7 @@ const Dashboard = () => {
 
   // In Dashboard.jsx
 
-const handleGenerateCaption = async () => {
+  const handleGenerateCaption = async () => {
     if (!imageUrl) {
       setError("Please upload an image first."); // Also set an error for user feedback
       return;
@@ -127,7 +128,7 @@ const handleGenerateCaption = async () => {
     setLoading(true);
     setCaptionGenerated(false);
     setError(null);
-    
+
     try {
       const token = await user.getIdToken();
       console.log("Token received:", token.substring(0, 30) + "..."); // Log a snippet of the token
@@ -137,28 +138,28 @@ const handleGenerateCaption = async () => {
         style: selectedStyle,
         custom_description: selectedStyle === 'custom' ? customDescription.trim() : null
       };
-      
+
       console.log("Sending request to backend with body:", requestBody);
 
       // Go to the "Network" tab in your browser dev tools now!
       const response = await fetch("http://localhost:8000/generate-caption", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       console.log("Backend responded with status:", response.status);
       const res = await response.json();
       console.log("Backend response data:", res);
-      
+
       if (!response.ok) {
         // This will now catch errors like 401, 404, 500 etc.
         throw new Error(res.detail || "An error occurred on the server.");
       }
-      
+
       console.log("SUCCESS: Setting caption text.");
       setCaptionText(res.enhanced_caption || res.caption);
       setBasicCaption(res.basic_caption || res.caption);
@@ -200,6 +201,7 @@ const handleGenerateCaption = async () => {
     setShowCustomInput(false);
     setError(null);
     setUploadProgress(0);
+    setUploaderFiles([]);
   };
 
   const handleDownloadImage = () => {
@@ -241,8 +243,8 @@ const handleGenerateCaption = async () => {
         transition={{ duration: 1 }}
         className="text-center"
       >
-        <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text mb-4">
-          AI Caption Generator
+        <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text mb-4 py-2">
+          Caption-It-All
         </h1>
         <p className="text-neutral-400 text-lg max-w-2xl">
           Upload your image and let AI create perfect captions for your social media posts
@@ -266,7 +268,11 @@ const handleGenerateCaption = async () => {
 
       {/* File Upload Section */}
       <div className="w-full max-w-3xl p-1 rounded-xl border-2 border-blue-400 shadow-[0_0_15px_3px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_5px_rgba(59,130,246,0.6)] transition duration-300 ease-in-out">
-        <FileUpload onChange={handleFileUpload} />
+        <FileUpload
+          files={uploaderFiles}
+          setFiles={setUploaderFiles}
+          onChange={handleFileUpload}
+        />
       </div>
 
       {/* Upload Progress */}
@@ -305,9 +311,9 @@ const handleGenerateCaption = async () => {
             exit={{ opacity: 0, scale: 0.9 }}
             className="w-full max-w-md relative group"
           >
-            <img 
-              src={imageUrl} 
-              alt="Uploaded" 
+            <img
+              src={imageUrl}
+              alt="Uploaded"
               className="w-full h-auto rounded-lg shadow-lg border border-neutral-700"
             />
             <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -320,10 +326,10 @@ const handleGenerateCaption = async () => {
               </button>
               <button
                 onClick={handleReset}
-                className="p-2 bg-black/50 backdrop-blur-sm rounded-full hover:bg-black/70 transition-colors"
+                className="p-2 bg-red-600/50 backdrop-blur-sm rounded-full hover:bg-red-600/70 transition-colors"
                 title="Remove Image"
               >
-                <RefreshCw className="h-4 w-4 text-white" />
+                <X className="h-4 w-4 text-white" />
               </button>
             </div>
             <div className="mt-2 text-xs text-neutral-400 text-center">
@@ -352,11 +358,10 @@ const handleGenerateCaption = async () => {
                   <motion.button
                     key={style.id}
                     onClick={() => setSelectedStyle(style.id)}
-                    className={`p-4 rounded-lg border transition-all text-left ${
-                      selectedStyle === style.id
+                    className={`p-4 rounded-lg border transition-all text-left ${selectedStyle === style.id
                         ? 'border-purple-400 bg-purple-900/30 text-white'
                         : 'border-neutral-600 bg-neutral-800/30 text-neutral-300 hover:border-neutral-500'
-                    }`}
+                      }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -500,6 +505,7 @@ const handleGenerateCaption = async () => {
               <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>Custom description support</li>
               <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>Secure cloud image storage</li>
               <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>One-click copy to clipboard</li>
+              <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>Complete caption history</li>
             </ul>
           </div>
           <div className="bg-neutral-800/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-700">
@@ -508,6 +514,7 @@ const handleGenerateCaption = async () => {
               <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">1.</span><span>Upload your image</span></div>
               <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">2.</span><span>Choose style or describe custom</span></div>
               <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">3.</span><span>Generate & copy your caption</span></div>
+              <div className="flex items-start gap-3"><span className="text-blue-400 font-medium">3.</span><span>Click on Generate New for multiple captions</span></div>
             </div>
           </div>
         </div>

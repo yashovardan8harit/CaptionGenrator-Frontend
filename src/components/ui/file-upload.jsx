@@ -1,9 +1,10 @@
 import { cn } from "./../../lib/utils";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
 
+// ... (mainVariant and secondaryVariant remain the same) ...
 const mainVariant = {
   initial: {
     x: 0,
@@ -26,17 +27,33 @@ const secondaryVariant = {
 };
 
 export const FileUpload = ({
-  onChange
+  files,      // <-- The file array now comes from the parent
+  setFiles,   // <-- The function to update files comes from the parent
+  onChange    // <-- The existing onChange for triggering uploads
 }) => {
-  const [files, setFiles] = useState([]);
+  // 2. REMOVE THE INTERNAL STATE. It's now controlled by the parent.
+  // const [files, setFiles] = useState([]); 
+
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const fileInputRef = useRef(null);
 
+  // 2. ADD THIS `useEffect` HOOK
+  // This effect watches the `files` prop. When the parent component
+  // clears the array (during a reset), this code will run.
+  useEffect(() => {
+    // If the file array is cleared and the ref to the input exists...
+    if (files.length === 0 && fileInputRef.current) {
+      // ...programmatically clear the value of the native file input.
+      fileInputRef.current.value = null;
+      console.log("File input has been programmatically reset.");
+    }
+  }, [files]); // The dependency array ensures this runs only when `files` changes.
+
   const handleFileChange = async (newFiles) => {
     // Reset error state
     setUploadError(null);
-    
+
     // Validate file type (only images)
     const validFiles = newFiles.filter(file => {
       if (!file.type.startsWith('image/')) {
@@ -48,8 +65,9 @@ export const FileUpload = ({
 
     if (validFiles.length === 0) return;
 
-    setFiles((prevFiles) => [...prevFiles, ...validFiles]);
-    
+    // 3. UPDATE THE PARENT'S STATE DIRECTLY
+    setFiles(validFiles); // This now calls the function passed from Dashboard
+
     // Call the parent onChange handler
     if (onChange) {
       setUploading(true);
@@ -75,8 +93,7 @@ export const FileUpload = ({
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.bmp', '.webp']
     },
     onDrop: handleFileChange,
-    onDropRejected: (rejectedFiles) => {
-      console.log('Rejected files:', rejectedFiles);
+    onDropRejected: () => {
       setUploadError('Invalid file type. Please upload an image file.');
     },
   });
@@ -107,14 +124,14 @@ export const FileUpload = ({
             className="relative z-20 font-sans font-normal text-neutral-400 text-base mt-2">
             Drag or drop your image here or click to upload
           </p>
-          
+
           {/* Show upload status */}
           {uploading && (
             <p className="relative z-20 font-sans font-normal text-blue-400 text-sm mt-2 animate-pulse">
               Uploading to Cloudinary...
             </p>
           )}
-          
+
           {/* Show error message */}
           {uploadError && (
             <p className="relative z-20 font-sans font-normal text-red-400 text-sm mt-2">
@@ -225,11 +242,10 @@ export function GridPattern() {
           return (
             <div
               key={`${col}-${row}`}
-              className={`w-10 h-10 flex shrink-0 rounded-[2px] ${
-                index % 2 === 0
+              className={`w-10 h-10 flex shrink-0 rounded-[2px] ${index % 2 === 0
                   ? "bg-neutral-950"
                   : "bg-neutral-950 shadow-[0px_0px_1px_3px_rgba(0,0,0,1)_inset]"
-              }`} />
+                }`} />
           );
         }))}
     </div>
