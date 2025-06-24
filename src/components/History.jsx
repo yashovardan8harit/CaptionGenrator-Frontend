@@ -157,11 +157,37 @@ const History = () => {
     document.body.removeChild(link);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Just now';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  // NEW / CORRECTED for IST
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'Just now';
+
+  // As before, ensure the input string is treated as UTC.
+  // The database timestamp from Render will be in UTC.
+  if (!dateString.endsWith('Z')) {
+    dateString = dateString.replace(' ', 'T') + 'Z';
+  }
+
+  const date = new Date(dateString);
+
+  // Define the options for formatting.
+  // CRUCIAL: Add the `timeZone` option and set it to 'Asia/Kolkata'.
+  const options = {
+    timeZone: 'Asia/Kolkata', // This forces the output to be in IST
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true // Use AM/PM format
   };
+
+  // Now, create the formatter with the specified options.
+  const formatter = new Intl.DateTimeFormat('en-US', options);
+
+  // Format the date. This will now be in IST.
+  return formatter.format(date);
+};
 
   const filteredHistory = history.filter(item => {
     const searchTermLower = searchTerm.toLowerCase();
