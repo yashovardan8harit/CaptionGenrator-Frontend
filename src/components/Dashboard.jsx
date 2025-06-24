@@ -5,6 +5,7 @@ import { useAuth } from './../lib/AuthContext';
 
 // Make sure these paths are correct relative to Dashboard.jsx
 import { FileUpload } from "./ui/file-upload";
+import { fetchStyles, generateCaption } from "../lib/api";
 import { uploadToCloudinary } from "../lib/utils";
 
 const Dashboard = () => {
@@ -30,15 +31,18 @@ const Dashboard = () => {
   const { currentUser: user, loading: authLoading } = useAuth();
 
   // Load available styles on component mount
+  // In Dashboard.jsx, place this after the state declarations
+
   useEffect(() => {
-    const fetchStyles = async () => {
+    const loadStyles = async () => {
       try {
-        const response = await fetch("http://localhost:8000/caption-styles");
-        const data = await response.json();
+        // Use the clean, centralized API function. No need to specify the URL here.
+        const data = await fetchStyles();
         setAvailableStyles(data.styles);
       } catch (error) {
-        console.error("Error fetching styles:", error);
-        // Fallback styles if API fails
+        console.error("Error fetching styles:", error.message);
+
+        // Fallback styles in case the API call fails
         setAvailableStyles([
           { id: "creative", name: "Creative", description: "Engaging and imaginative" },
           { id: "funny", name: "Funny", description: "Humorous and witty" },
@@ -50,8 +54,9 @@ const Dashboard = () => {
         ]);
       }
     };
-    fetchStyles();
-  }, []);
+
+    loadStyles();
+  }, []); // The empty dependency array [] means this effect runs only once when the component mounts.
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -110,71 +115,60 @@ const Dashboard = () => {
 
   // In Dashboard.jsx
 
+  // In Dashboard.jsx
+
   const handleGenerateCaption = async () => {
+    // 1. Initial checks to prevent unnecessary API calls
     if (!imageUrl) {
-      setError("Please upload an image first."); // Also set an error for user feedback
+      setError("Please upload an image first.");
       return;
     }
-
     if (!user) {
       setError("You must be logged in to generate captions.");
       return;
     }
-
     if (selectedStyle === 'custom' && !customDescription.trim()) {
-      setError("Please describe what kind of caption you want for the custom style.");
+      setError("Please describe your desired caption style.");
       return;
     }
+
+    // 2. Set loading states to give the user feedback
     setLoading(true);
-    setCaptionGenerated(false);
-    setError(null);
+    setCaptionGenerated(false); // Hide previous caption while generating a new one
+    setError(null); // Clear previous errors
 
     try {
+      // 3. Get the user's authentication token from Firebase
       const token = await user.getIdToken();
-      console.log("Token received:", token.substring(0, 30) + "..."); // Log a snippet of the token
 
+      // 4. Prepare the data to be sent to the backend
       const requestBody = {
         image_url: imageUrl,
         style: selectedStyle,
         custom_description: selectedStyle === 'custom' ? customDescription.trim() : null
       };
 
-      console.log("Sending request to backend with body:", requestBody);
+      // 5. Call the centralized API function (clean and simple)
+      const responseData = await generateCaption(requestBody, token);
 
-      // Go to the "Network" tab in your browser dev tools now!
-      const response = await fetch("http://localhost:8000/generate-caption", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      console.log("Backend responded with status:", response.status);
-      const res = await response.json();
-      console.log("Backend response data:", res);
-
-      if (!response.ok) {
-        // This will now catch errors like 401, 404, 500 etc.
-        throw new Error(res.detail || "An error occurred on the server.");
-      }
-
+      // 6. Update the component's state with the successful response
       console.log("SUCCESS: Setting caption text.");
-      setCaptionText(res.enhanced_caption || res.caption);
-      setBasicCaption(res.basic_caption || res.caption);
+      setCaptionText(responseData.enhanced_caption || responseData.caption);
+      setBasicCaption(responseData.basic_caption || responseData.caption);
       setCaptionGenerated(true);
 
     } catch (err) {
-      // Checkpoint 4: If anything goes wrong, we'll see it here.
+      // 7. If anything goes wrong, catch the error and show it to the user
       console.error("--- CATCH BLOCK TRIGGERED ---");
       console.error("The error is:", err);
       setError(`Caption generation failed: ${err.message}`);
       setCaptionText("");
       setBasicCaption("");
       setCaptionGenerated(false);
+
     } finally {
-      // Checkpoint 5: This will always run, no matter what.
+      // 8. This block runs whether the call succeeded or failed
+      // It ensures the loading spinner is always turned off
       console.log("--- FINALLY BLOCK --- Setting loading to false.");
       setLoading(false);
     }
@@ -359,8 +353,8 @@ const Dashboard = () => {
                     key={style.id}
                     onClick={() => setSelectedStyle(style.id)}
                     className={`p-4 rounded-lg border transition-all text-left ${selectedStyle === style.id
-                        ? 'border-purple-400 bg-purple-900/30 text-white'
-                        : 'border-neutral-600 bg-neutral-800/30 text-neutral-300 hover:border-neutral-500'
+                      ? 'border-purple-400 bg-purple-900/30 text-white'
+                      : 'border-neutral-600 bg-neutral-800/30 text-neutral-300 hover:border-neutral-500'
                       }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -524,7 +518,7 @@ const Dashboard = () => {
       <footer className="relative w-full max-w-4xl mt-12">
         {/* Gradient divider */}
         <div className="w-full h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent mb-8"></div>
-        
+
         <div className="bg-gradient-to-br from-neutral-900/60 to-purple-900/20 backdrop-blur-sm border border-neutral-700/50 rounded-2xl p-8 shadow-2xl">
           {/* Main branding */}
           <div className="text-center mb-6">
@@ -562,19 +556,19 @@ const Dashboard = () => {
               <p className="text-neutral-300 text-sm mb-3">
                 Crafted with <span className="text-red-400 animate-pulse">❤</span> by passionate developers
               </p>
-              
+
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <div className="flex items-center gap-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-2 rounded-full border border-purple-500/30">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
                   <span className="text-purple-300 font-medium text-sm">Ishita Khare</span>
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-neutral-400">
                   <div className="w-1 h-1 bg-neutral-500 rounded-full"></div>
                   <div className="w-1 h-1 bg-neutral-500 rounded-full"></div>
                   <div className="w-1 h-1 bg-neutral-500 rounded-full"></div>
                 </div>
-                
+
                 <div className="flex items-center gap-2 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 px-4 py-2 rounded-full border border-blue-500/30">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                   <span className="text-blue-300 font-medium text-sm">Yashovardhan Harit</span>
@@ -591,7 +585,7 @@ const Dashboard = () => {
                   Made in <span className="text-orange-400">🇮🇳</span> India
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-[10px] font-medium">
                   ✓ Free Forever

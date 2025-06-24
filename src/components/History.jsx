@@ -17,6 +17,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { fetchHistory as apiFetchHistory, deleteHistoryItem as apiDeleteHistoryItem, clearAllHistory as apiClearAllHistory } from '../lib/api';
 
 const History = () => {
   // 1. CORRECTLY destructure `currentUser` and rename it to `user`
@@ -75,26 +76,11 @@ const History = () => {
     setLoading(true);
     setError(null);
     try {
-      // 3. SEND THE TOKEN with the request
       const token = await currentUser.getIdToken();
-      const response = await fetch('http://localhost:8000/user/history', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to fetch history from server');
-      }
-
-      console.log("[History.jsx] Successfully fetched data:", data);
+      // Use the new, clean API function
+      const data = await apiFetchHistory(token); 
       setHistory(data.history || []);
-
     } catch (err) {
-      console.error("[History.jsx] Error in fetchHistory:", err);
       setError(`Failed to load history: ${err.message}`);
       setHistory([]);
     } finally {
@@ -107,11 +93,7 @@ const History = () => {
     setDeleteLoading(historyId);
     try {
       const token = await user.getIdToken();
-      const response = await fetch(`http://localhost:8000/user/history/${historyId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Failed to delete item');
+      await apiDeleteHistoryItem(historyId, token); // Use the new function
       setHistory(prev => prev.filter(item => item.id !== historyId));
     } catch (err) {
       setError(`Failed to delete: ${err.message}`);
@@ -125,11 +107,7 @@ const History = () => {
     setClearingAll(true);
     try {
       const token = await user.getIdToken();
-      const response = await fetch('http://localhost:8000/user/history', {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Failed to clear history');
+      await apiClearAllHistory(token); // Use the new function
       setHistory([]);
     } catch (err) {
       setError(`Failed to clear history: ${err.message}`);
