@@ -520,10 +520,104 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center text-sm text-gray-500 py-4 mt-8 border-t border-neutral-800 w-full max-w-2xl">
-        <p>© 2025 AI Caption Generator • Built with ❤️ for creators</p>
-        <p className="text-xs mt-1 text-gray-600">Powered by AI • Secure • Fast • Free</p>
+      {/* Enhanced Creative Footer */}
+      <footer className="relative w-full max-w-4xl mt-12">
+        {/* Gradient divider */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent mb-8"></div>
+        
+        <div className="bg-gradient-to-br from-neutral-900/60 to-purple-900/20 backdrop-blur-sm border border-neutral-700/50 rounded-2xl p-8 shadow-2xl">
+          {/* Main branding */}
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text mb-2">
+              Caption-It-All
+            </h3>
+            <p className="text-neutral-400 text-sm max-w-md mx-auto">
+              Transform your moments into captivating stories with AI-powered caption generation
+            </p>
+          </div>
+
+          {/* Features grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="text-center">
+              <div className="text-purple-400 text-2xl mb-2">🎨</div>
+              <p className="text-xs text-neutral-300">Creative Styles</p>
+            </div>
+            <div className="text-center">
+              <div className="text-blue-400 text-2xl mb-2">⚡</div>
+              <p className="text-xs text-neutral-300">Instant Generation</p>
+            </div>
+            <div className="text-center">
+              <div className="text-pink-400 text-2xl mb-2">🔐</div>
+              <p className="text-xs text-neutral-300">Secure & Private</p>
+            </div>
+            <div className="text-center">
+              <div className="text-green-400 text-2xl mb-2">💫</div>
+              <p className="text-xs text-neutral-300">AI Powered</p>
+            </div>
+          </div>
+
+          {/* Creators section */}
+          <div className="border-t border-neutral-700/50 pt-6">
+            <div className="text-center mb-4">
+              <p className="text-neutral-300 text-sm mb-3">
+                Crafted with <span className="text-red-400 animate-pulse">❤</span> by passionate developers
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div className="flex items-center gap-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-2 rounded-full border border-purple-500/30">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                  <span className="text-purple-300 font-medium text-sm">Ishita Khare</span>
+                </div>
+                
+                <div className="flex items-center gap-2 text-neutral-400">
+                  <div className="w-1 h-1 bg-neutral-500 rounded-full"></div>
+                  <div className="w-1 h-1 bg-neutral-500 rounded-full"></div>
+                  <div className="w-1 h-1 bg-neutral-500 rounded-full"></div>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 px-4 py-2 rounded-full border border-blue-500/30">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  <span className="text-blue-300 font-medium text-sm">Yashovardhan Harit</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom section */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
+              <div className="flex items-center gap-4">
+                <span>© 2025 Caption-It-All</span>
+                <div className="hidden sm:block w-1 h-1 bg-neutral-600 rounded-full"></div>
+                <span className="flex items-center gap-1">
+                  Made in <span className="text-orange-400">🇮🇳</span> India
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-[10px] font-medium">
+                  ✓ Free Forever
+                </span>
+                <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-[10px] font-medium">
+                  ⚡ AI Powered
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Subtle animation elements */}
+          <div className="absolute top-4 right-4 opacity-20">
+            <div className="w-3 h-3 bg-purple-400 rounded-full animate-ping"></div>
+          </div>
+          <div className="absolute bottom-4 left-4 opacity-20">
+            <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Very bottom tagline */}
+        <div className="text-center mt-6">
+          <p className="text-xs text-neutral-600">
+            "Every picture tells a story. We help you tell it better." ✨
+          </p>
+        </div>
       </footer>
     </div>
   );
